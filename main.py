@@ -6,9 +6,9 @@ import pygame
 
 
 CAPTION = "Game ban may bay 2 nguoi cuc manh"
-ICON = "solar-system.png"
-BG_IMG = "kaos-ren-space.jpg"
-SC_1 = "sc_1.png"
+ICON = "bullet_kin.jpg"
+BG_IMG = "PixelBackgroundSeamlessVertically.png"
+SC_1 = "PlayerRed_Frame_01_png_processed.png"
 
 pygame.init()
 
@@ -26,19 +26,22 @@ rect_2 = pygame.Rect(W//2,0,W//2,H)
 sub_1 = canvas.subsurface(rect_1)
 sub_2 = canvas.subsurface(rect_2)
 
+
 background = pygame.image.load(BG_IMG)
+background = pygame.transform.scale(background, (W//2, H))
 pygame.display.set_caption(CAPTION)
 icon = pygame.image.load(ICON)
 pygame.display.set_icon(icon)
 
 sc_1 = pygame.image.load(SC_1)
 
-x1 = W//4 - (sc_1.get_width()//2)
-y1 = 7*H//8 -(sc_1.get_height()//2)
-
-def sc():
-    sub_1.blit(sc_1,(x1, y1))
-    sub_2.blit(sc_1,(x1, y1))
+def sc(c):
+    w = c.get_width()
+    h = c.get_height()
+    x = W//4 - (w//2)
+    y = 7*H//8 -(h//2)
+    sub_1.blit(c,(x, y))
+    sub_2.blit(c,(x, y))
 
 RUNNING = True
 while RUNNING:
@@ -56,5 +59,5 @@ while RUNNING:
             if event.key == pygame.K_ESCAPE:
                 RUNNING = False
 
-    sc()
+    sc(sc_1)
     pygame.display.update()
