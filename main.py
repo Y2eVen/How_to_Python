@@ -5,6 +5,7 @@ Cre: Lil Hoe, Ten Fingez
 import pygame
 from pygame.locals import *
 import random
+import math
 
 # define
 CAPTION = "Game ban may bay 2 nguoi cuc manh"
@@ -27,11 +28,18 @@ WASD = 1
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 
 # fx
 SLAP = "FX/Slap.mp3"
 AH = "FX/Ah.mp3"
 
+# bullet
+TOP_BULLET = 0
+LEFT_BULLET = 1
+RIGHT_BULLET = -1
+
+# exhaust
 LEFT_EXHAUST = -4
 RIGHT_EXHAUST = 3
 
@@ -102,11 +110,12 @@ class Spacecraft(pygame.sprite.Sprite):
         self.rect.center = [W//4, control * H // 8]
         self.health = 10
         self.max_health = 10
-        self.speed = 7
+        self.speed = 2
         self.max_speed = 15
         self.last_shot = pygame.time.get_ticks()
         self.cooldown = 500  # milliseconds
         self.shield = 0
+        self.bullets_level = 2
 
         self.left_exhaust = Exhaust(self, LEFT_EXHAUST)
         self.right_exhaust = Exhaust(self, RIGHT_EXHAUST)
@@ -115,66 +124,75 @@ class Spacecraft(pygame.sprite.Sprite):
 
     def update(self):
 
-        now = pygame.time.get_ticks()
+        self.move()
 
-        pressed = pygame.key.get_pressed()
+        self.shoot()
 
-        if self.control == AROW:
-            if pressed[pygame.K_UP]:
-                self.rect.y -= self.speed
-                if self.rect.top < H//2:
-                    self.rect.top = H//2
-            if pressed[pygame.K_DOWN]:
-                self.rect.y += self.speed
-                if self.rect.bottom > H - 15:
-                    self.rect.bottom = H - 15
-            if pressed[pygame.K_LEFT]:
-                self.rect.x -= self.speed
-                if self.rect.left < 0:
-                    self.rect.left = 0
-            if pressed[pygame.K_RIGHT]:
-                self.rect.x += self.speed
-                if self.rect.right > W//2:
-                    self.rect.right = W//2
-
-            if pressed[pygame.K_RETURN] and now - self.last_shot > self.cooldown:
-                shoot_fx.play()
-                bullet = Bullet(self)
-                bullets.add(bullet)
-                self.last_shot = now
-
-            self.draw_health_bar((self.rect.bottom + 7))
-
-        elif self.control == WASD:
-            if pressed[pygame.K_w]:
-                self.rect.y += self.speed
-                if self.rect.bottom > H // 2:
-                    self.rect.bottom = H//2
-            if pressed[pygame.K_s]:
-                self.rect.y -= self.speed
-                if self.rect.top < 15:
-                    self.rect.top = 15
-            if pressed[pygame.K_d]:
-                self.rect.x -= self.speed
-                if self.rect.left < 0:
-                    self.rect.left = 0
-            if pressed[pygame.K_a]:
-                self.rect.x += self.speed
-                if self.rect.right > W // 2:
-                    self.rect.right = W//2
-
-            if pressed[pygame.K_SPACE] and now - self.last_shot > self.cooldown:
-                shoot_fx.play()
-                bullet = Bullet(self)
-                bullets.add(bullet)
-                self.last_shot = now
-
-            self.draw_health_bar((self.rect.top - 14))
+        self.health_bar()
 
         if self.shield:
             self.shield_up()
 
-    def draw_health_bar(self, y):
+    def move(self):
+        pressed = pygame.key.get_pressed()
+
+        up = pressed[pygame.K_UP]
+        down = pressed[pygame.K_DOWN]
+        left = pressed[pygame.K_LEFT]
+        right = pressed[pygame.K_RIGHT]
+        max_top = H // 2
+        max_bottom = H - 15
+
+        if self.control == WASD:
+            up = pressed[pygame.K_s]
+            down = pressed[pygame.K_w]
+            left = pressed[pygame.K_d]
+            right = pressed[pygame.K_a]
+            max_top = 15
+            max_bottom = H // 2
+
+        if up:
+            self.rect.y -= self.speed
+            if self.rect.top < max_top:
+                self.rect.top = max_top
+        if down:
+            self.rect.y += self.speed
+            if self.rect.bottom > max_bottom:
+                self.rect.bottom = max_bottom
+        if left:
+            self.rect.x -= self.speed
+            if self.rect.left < 0:
+                self.rect.left = 0
+        if right:
+            self.rect.x += self.speed
+            if self.rect.right > W // 2:
+                self.rect.right = W//2
+
+    def shoot(self):
+        now = pygame.time.get_ticks()
+        pressed = pygame.key.get_pressed()
+        pressed_key = pressed[pygame.K_RETURN]
+        if self.control == WASD:
+            pressed_key = pressed[pygame.K_SPACE]
+
+        if pressed_key and now - self.last_shot > self.cooldown:
+            shoot_fx.play()
+            if self.bullets_level == 1:
+                bullets.add(Bullet(self, TOP_BULLET))
+            elif self.bullets_level == 2:
+                bullets.add(Bullet(self, LEFT_BULLET))
+                bullets.add(Bullet(self, RIGHT_BULLET))
+            elif self.bullets_level == 3:
+                bullets.add(Bullet(self, TOP_BULLET))
+                bullets.add(Bullet(self, LEFT_BULLET))
+                bullets.add(Bullet(self, RIGHT_BULLET))
+            self.last_shot = now
+
+    def health_bar(self):
+
+        y = self.rect.bottom + 7
+        if self.control == WASD:
+            y = self.rect.top - 14
 
         def draw(surface, x, y, w, h):
             pygame.draw.rect(surface, RED, (x, y, w, h))
@@ -206,16 +224,19 @@ class Spacecraft(pygame.sprite.Sprite):
 
         mask = pygame.mask.from_surface(self.image)
         mask_surf = mask.to_surface()
-        mask_surf.set_colorkey((0, 0, 0))
+        mask_surf.set_colorkey(BLACK)
         draw(sub_right)
         draw(sub_left)
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, spacecraft):
+    def __init__(self, spacecraft, position):
         pygame.sprite.Sprite.__init__(self)
 
         self.spacecraft = spacecraft
+        self.position = position
+        self.speed = self.spacecraft.speed
+
         self.x = spacecraft.rect.centerx
         if spacecraft.control == AROW:
             self.image = pygame.image.load(PLASMA_MEDIUM)
@@ -225,27 +246,30 @@ class Bullet(pygame.sprite.Sprite):
                 pygame.image.load(LASER_MEDIUM), 180)
             self.y = spacecraft.rect.bottom
 
+        if self.position == LEFT_BULLET:
+            self.image = pygame.transform.rotate(self.image, 26.5)
+        elif self.position == RIGHT_BULLET:
+            self.image = pygame.transform.rotate(self.image, -26.5)
+
         self.rect = self.image.get_rect()
         self.rect.center = [self.x, self.y]
-        self.speed = self.spacecraft.speed
 
     def update(self):
 
         if self.spacecraft.control == AROW:
+            self.rect.x -= (self.position * self.speed / 2)
             self.rect.y -= self.speed
-            if self.rect.bottom < 0:
-                self.kill()
-
-        else:
+        elif self.spacecraft.control == WASD:
+            self.rect.x += (self.position * self.speed / 2)
             self.rect.y += self.speed
-            if self.rect.top > H:
-                self.kill()
+
+        if self.rect.left < 0 or self.rect.right > W // 2 or self.rect.bottom < 0 or self.rect.top > H:
+            self.kill()
 
         collide = pygame.sprite.spritecollideany(
             self, spacecrafts, pygame.sprite.collide_mask)
 
         if collide:
-
             if collide != self.spacecraft:
                 self.kill()
                 if collide.shield:
@@ -381,7 +405,8 @@ class Powerup(pygame.sprite.Sprite):
         if collide:
 
             if self.power == "Ammo":
-                pass
+                if collide.bullets_level < 3:
+                    collide.bullets_level += 1
             elif self.power == "Energy":
                 if collide.speed < collide.max_speed:
                     collide.speed += 1
