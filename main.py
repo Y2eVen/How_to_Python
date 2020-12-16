@@ -110,12 +110,12 @@ class Spacecraft(pygame.sprite.Sprite):
         self.rect.center = [W//4, control * H // 8]
         self.health = 10
         self.max_health = 10
-        self.speed = 2
-        self.max_speed = 15
+        self.speed = 6
+        self.max_speed = 16
         self.last_shot = pygame.time.get_ticks()
         self.cooldown = 500  # milliseconds
         self.shield = 0
-        self.bullets_level = 2
+        self.bullets_level = 1
 
         self.left_exhaust = Exhaust(self, LEFT_EXHAUST)
         self.right_exhaust = Exhaust(self, RIGHT_EXHAUST)
@@ -257,10 +257,10 @@ class Bullet(pygame.sprite.Sprite):
     def update(self):
 
         if self.spacecraft.control == AROW:
-            self.rect.x -= (self.position * self.speed / 2)
+            self.rect.x -= (self.position * self.speed//2)
             self.rect.y -= self.speed
         elif self.spacecraft.control == WASD:
-            self.rect.x += (self.position * self.speed / 2)
+            self.rect.x += (self.position * self.speed//2)
             self.rect.y += self.speed
 
         if self.rect.left < 0 or self.rect.right > W // 2 or self.rect.bottom < 0 or self.rect.top > H:
@@ -409,7 +409,7 @@ class Powerup(pygame.sprite.Sprite):
                     collide.bullets_level += 1
             elif self.power == "Energy":
                 if collide.speed < collide.max_speed:
-                    collide.speed += 1
+                    collide.speed += 2
             elif self.power == "Health":
                 if collide.health < collide.max_health:
                     collide.health += 1
