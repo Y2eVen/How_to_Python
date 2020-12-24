@@ -23,9 +23,15 @@ shoot = [0,0]
 print("Server is listening")
 
 def threaded_client(conn, player):
-    conn.sendall(str.encode(str(player)))    
+    conn.sendall(str.encode(str(player)))   
+    global currentPlayer
     reply = ""
     while True:
+        if currentPlayer >= 2:
+            reply = "0"
+        else:
+            reply = "1"
+        
         try:
             data = conn.recv(2048).decode("utf-8")
             if data:
@@ -51,7 +57,11 @@ def threaded_client(conn, player):
                         powerups[1] = (power2, randX)
 #  
                     reply = f"{powerups[0]}.{powerups[1]}"
-                    conn.sendall(str.encode(reply))
+                    conn.sendall(str.encode(reply))    
+                elif tokens[0] == "waitting":
+                    conn.send(str.encode(reply))
+                
+#                 print("Current Player: ", currentPlayer)
 #                 print("Received: ", data)
 #                 print("Sended: " , reply)
                     
@@ -62,7 +72,6 @@ def threaded_client(conn, player):
         
     print("lost connection")
     conn.close() 
-    global currentPlayer
     currentPlayer -= 1
 
 currentPlayer = 0

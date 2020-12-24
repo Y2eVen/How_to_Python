@@ -24,6 +24,7 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+YELLOW = (255, 204, 0)
 
 # fx
 SHOOT_FX = "FX/Chius.mp3"
@@ -75,6 +76,8 @@ explosion_fx.set_volume(0.25)
 shoot_fx = pygame.mixer.Sound(SHOOT_FX)
 shoot_fx.set_volume(0.25)
 
+# font
+font = pygame.font.Font('freesansbold.ttf', 32)
 
 # spacecraft
 class Spacecraft(pygame.sprite.Sprite):
@@ -431,17 +434,48 @@ class Powerup(pygame.sprite.Sprite):
                     collide.shield = 1
 
             self.kill()
-                
+
+# class Text(pygame.sprite.Sprite):
+#     def __init__(self, text, size, color, width, height):
+#         # Call the parent class (Sprite) constructor  
+#         pygame.sprite.Sprite.__init__(self)
+# 
+#         self.font = pygame.font.SysFont("Arial", size)
+#         self.textSurf = self.font.render(text, 1, color)
+#         self.image = pygame.Surface((width, height))
+#         W = self.textSurf.get_width()
+#         H = self.textSurf.get_height()
+#         self.image.blit(self.textSurf, [width/2 - W/2, height/2 - H/2])
+            
+# class WaittingText(pygame.sprite.Sprite):
+#     def __init__(self):
+#         pygame.sprite.Sprite.__init__(self)
+#         
+#         text_width, text_height = font.size("Waitting for another player ...")
+#         self.rect = (0,0,text_width,text_height)
+#         self.x = x
+#         self.y = H//2
+# 
+#         if self.control == AROW:
+#             self.rect.center = [self.x, self.y + self.rect.h//2]
+#         elif self.control == WASD:
+#             self.rect.center = [self.x, self.y - self.rect.h//2]
+           
 def draw_background():
     screen2.blit(background, (0, 0))
 
+def showWaittingText():
+    text = "Waitting for another player ..."
+    textWidth, textHeight = font.size(text)
+    waittingText = font.render(text, True, YELLOW)
+    screen2.blit(waittingText, (W//2 - textWidth//2, H//2 - textHeight//2))
+    
 # sprite groups
 spacecrafts = pygame.sprite.Group()
 bullets = pygame.sprite.Group()
 explosions = pygame.sprite.Group()
 exhausts = pygame.sprite.Group()
 powerups = pygame.sprite.Group()
-
 
 # create spacecrafts
 red_spacecraft = Spacecraft(AROW)
@@ -455,6 +489,7 @@ player = n.getPlayer()
 
 time = 0
 RUNNING = True
+waitting = 0
 
 while RUNNING:
     clock.tick(FPS)
@@ -466,29 +501,32 @@ while RUNNING:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 RUNNING = False
+    waitting = int(n.send("waitting."))
+    if waitting:       
+        showWaittingText()
+    else:           
+        time += 1
+        if time == 300:
+            time = 0
+            data = n.send(f"powerup.{leftBoundP}.{rightBoundP}")
+            tokens = data.split(".")
+             
+            tuple1 = eval(tokens[0])
+            tuple2 = eval(tokens[1])
+            powerups.add(Powerup(AROW, tuple1[0], tuple1[1]))
+            powerups.add(Powerup(WASD, tuple2[0], tuple2[1]))
                 
-    time += 1
-    if time == 300:
-        time = 0
-        data = n.send(f"powerup.{leftBoundP}.{rightBoundP}")
-        tokens = data.split(".")
-        
-        tuple1 = eval(tokens[0])
-        tuple2 = eval(tokens[1])
-        powerups.add(Powerup(AROW, tuple1[0], tuple1[1]))
-        powerups.add(Powerup(WASD, tuple2[0], tuple2[1]))
-           
-    spacecrafts.update()
-    bullets.update()
-    explosions.update()
-    exhausts.update()
-    powerups.update()
-    
-    bullets.draw(screen2)             
-    spacecrafts.draw(screen2)
-    explosions.draw(screen2) 
-    exhausts.draw(screen2) 
-    powerups.draw(screen2) 
+        spacecrafts.update()
+        bullets.update()
+        explosions.update()
+        exhausts.update()
+        powerups.update()
+         
+        bullets.draw(screen2)             
+        spacecrafts.draw(screen2)
+        explosions.draw(screen2) 
+        exhausts.draw(screen2) 
+        powerups.draw(screen2) 
     
     pygame.display.update()
 
