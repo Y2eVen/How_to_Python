@@ -55,7 +55,12 @@ FPS = 60
 clock = pygame.time.Clock()
 
 # create screen
-screen2 = pygame.display.set_mode((W, H))
+window = pygame.display.set_mode((W, H))
+
+# create main surface and reverse surface
+canvas = pygame.Surface((2*W, 2*H))
+screen_rect = pygame.Rect(0, 0, W, H)
+screen = canvas.subsurface(screen_rect)
 
 # load background
 background = pygame.image.load(BACKGROUND)
@@ -211,7 +216,7 @@ class Spacecraft(pygame.sprite.Sprite):
             self.last_shot = now
  
     def health_bar(self):
- 
+        global sceen
         y = self.rect.bottom + 7
         if self.control == WASD:
             y = self.rect.top - 14
@@ -233,10 +238,10 @@ class Spacecraft(pygame.sprite.Sprite):
                 self.kill()
             pygame.draw.rect(surface, WHITE, (x, y, w, h), 1)
  
-        draw(screen2, self.rect.x, y, self.rect.width, 7)
+        draw(screen, self.rect.x, y, self.rect.width, 7)
  
     def shield_up(self):
- 
+        global screen
         def draw(surface):
             surface.blit(mask_surf, (self.rect.x - 2, self.rect.y))
             surface.blit(mask_surf, (self.rect.x + 2, self.rect.y))
@@ -246,7 +251,7 @@ class Spacecraft(pygame.sprite.Sprite):
         mask = pygame.mask.from_surface(self.image)
         mask_surf = mask.to_surface()
         mask_surf.set_colorkey(BLACK)
-        draw(screen2)
+        draw(screen)
         
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, spacecraft, position):
@@ -391,8 +396,7 @@ class Powerup(pygame.sprite.Sprite):
 
         self.control = control
         self.power = choice
-        img = pygame.image.load(
-            f"PixelSpaceRage/256px/Powerup_{self.power}_png_processed.png")
+        img = pygame.image.load(f"PixelSpaceRage/256px/Powerup_{self.power}_png_processed.png")
         if self.control == AROW:
             self.image = img
         elif self.control == WASD:
@@ -435,40 +439,18 @@ class Powerup(pygame.sprite.Sprite):
 
             self.kill()
 
-# class Text(pygame.sprite.Sprite):
-#     def __init__(self, text, size, color, width, height):
-#         # Call the parent class (Sprite) constructor  
-#         pygame.sprite.Sprite.__init__(self)
-# 
-#         self.font = pygame.font.SysFont("Arial", size)
-#         self.textSurf = self.font.render(text, 1, color)
-#         self.image = pygame.Surface((width, height))
-#         W = self.textSurf.get_width()
-#         H = self.textSurf.get_height()
-#         self.image.blit(self.textSurf, [width/2 - W/2, height/2 - H/2])
-            
-# class WaittingText(pygame.sprite.Sprite):
-#     def __init__(self):
-#         pygame.sprite.Sprite.__init__(self)
-#         
-#         text_width, text_height = font.size("Waitting for another player ...")
-#         self.rect = (0,0,text_width,text_height)
-#         self.x = x
-#         self.y = H//2
-# 
-#         if self.control == AROW:
-#             self.rect.center = [self.x, self.y + self.rect.h//2]
-#         elif self.control == WASD:
-#             self.rect.center = [self.x, self.y - self.rect.h//2]
-           
 def draw_background():
-    screen2.blit(background, (0, 0))
+    if player == 0:
+        window.blit(screen, (0, 0))
+    else:
+        window.blit(pygame.transform.rotate(screen, 180), (0, 0))
+    screen.blit(background, (0, 0))
 
 def showWaittingText():
     text = "Waitting for another player ..."
     textWidth, textHeight = font.size(text)
     waittingText = font.render(text, True, YELLOW)
-    screen2.blit(waittingText, (W//2 - textWidth//2, H//2 - textHeight//2))
+    window.blit(waittingText, (W//2 - textWidth//2, H//2 - textHeight//2))
     
 # sprite groups
 spacecrafts = pygame.sprite.Group()
@@ -522,11 +504,11 @@ while RUNNING:
         exhausts.update()
         powerups.update()
          
-        bullets.draw(screen2)             
-        spacecrafts.draw(screen2)
-        explosions.draw(screen2) 
-        exhausts.draw(screen2) 
-        powerups.draw(screen2) 
+        bullets.draw(screen)             
+        spacecrafts.draw(screen)
+        explosions.draw(screen) 
+        exhausts.draw(screen) 
+        powerups.draw(screen) 
     
     pygame.display.update()
 
