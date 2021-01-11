@@ -14,7 +14,7 @@ except socket.error as e:
     
 s.listen(2)
 
-powerups = [("Health",0),("Shield",0)]
+powerups = [("Health",0),("Shields",0)]
 pos = [(250, 437), (250, 62)]
 shoot = [0,0]
 # rooms = []
