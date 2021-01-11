@@ -7,6 +7,8 @@ from pygame.locals import *
 import random
 import math
 
+from menu import *
+
 
 class Game:
 
@@ -49,6 +51,10 @@ class Game:
     LEFT_EXHAUST = -4
     RIGHT_EXHAUST = 3
 
+    # fps
+    clock = pygame.time.Clock()
+    FPS = 30
+
     # create full window
     window = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 
@@ -57,14 +63,16 @@ class Game:
 
     # create main surface and 2 sub surface
     canvas = pygame.Surface((WIDTH, HEIGHT))
+    canvaz = pygame.Surface((WIDTH, HEIGHT))
+
     left_rect = pygame.Rect(0, 0, WIDTH//2, HEIGHT)
     right_rect = pygame.Rect(WIDTH//2, 0, WIDTH//2, HEIGHT)
     left_sub = canvas.subsurface(left_rect)
     right_sub = canvas.subsurface(right_rect)
 
     # load background
-    background = pygame.image.load(BACKGROUND)
-    background = pygame.transform.scale(background, (WIDTH//2, HEIGHT))
+    background = pygame.transform.scale(
+        pygame.image.load(BACKGROUND), (WIDTH//2, HEIGHT))
 
     # caption and icon
     pygame.display.set_caption(CAPTION)
@@ -92,50 +100,27 @@ class Game:
     def __init__(self):
         self.RUNNING = True
         self.PLAYING = False
-        self.TIME = 0
+        self.UP_KEY, self.DOWN_KEY, self.SELECT_KEY, self.BACK_KEY = False, False, False, False
+        self.time = 0
+        self.font_name = 'editundo.ttf'
+        self.main_menu = MainMenu(self)
+        self.start = StartMenu(self)
+        self.options = OptionsMenu(self)
+        self.credits = CreditsMenu(self)
+        self.menu = self.main_menu
 
-    def draw_background(self):
-        self.window.blit(pygame.transform.rotate(self.left_sub, 180), (0, 0))
-        self.window.blit(self.right_sub, (self.WIDTH//2, 0))
+    def loop(self):
 
-        self.left_sub.blit(self.background, (0, 0))
-        self.right_sub.blit(self.background, (0, 0))
-
-    def draw_group(self, groups):
-        groups.draw(self.left_sub)
-        groups.draw(self.right_sub)
-
-    def game_loop(self):
-
-        # create spacecrafts
-        red_spacecraft = Spacecraft(self.AROW)
-        blue_spacecraft = Spacecraft(self.WASD)
-
-        self.spacecrafts.add(red_spacecraft)
-        self.spacecrafts.add(blue_spacecraft)
+        if self.PLAYING:
+            self.create_spacecrafts()
 
         while self.PLAYING:
 
             self.draw_background()
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.PLAYING = False
-                    self.RUNNING = False
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        self.PLAYING = False
-                        self.RUNNING = False
+            self.check_events()
 
-            self.TIME += 1
-
-            if self.TIME % 30 == 0:
-                self.asteroids.add(Asteroid())
-
-            if self.TIME == 300:
-                self.TIME = 0
-                self.powerups.add(Powerup(self.AROW))
-                self.powerups.add(Powerup(self.WASD))
+            self.drop()
 
             self.spacecrafts.update()
             self.bullets.update()
@@ -152,6 +137,67 @@ class Game:
             self.asteroids.draw(self.window)
 
             pygame.display.update()
+            self.clock.tick(self.FPS)
+
+    def create_spacecrafts(self):
+        # create spacecrafts
+        red_spacecraft = Spacecraft(self.AROW)
+        blue_spacecraft = Spacecraft(self.WASD)
+
+        self.spacecrafts.add(red_spacecraft)
+        self.spacecrafts.add(blue_spacecraft)
+
+    def draw_background(self):
+
+        self.window.blit(pygame.transform.rotate(self.left_sub, 180), (0, 0))
+        self.window.blit(self.right_sub, (self.WIDTH // 2, 0))
+
+        self.left_sub.blit(self.background, (0, 0))
+        self.right_sub.blit(self.background, (0, 0))
+
+    def draw_group(self, groups):
+        groups.draw(self.left_sub)
+        groups.draw(self.right_sub)
+
+    def check_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.PLAYING = False
+                self.RUNNING = False
+                self.menu.run_display = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.PLAYING = False
+                    self.RUNNING = False
+                    self.menu.run_display = False
+                if event.key == pygame.K_RETURN:
+                    self.SELECT_KEY = True
+                if event.key == pygame.K_SPACE:
+                    self.BACK_KEY = True
+                if event.key == pygame.K_DOWN:
+                    self.DOWN_KEY = True
+                if event.key == pygame.K_UP:
+                    self.UP_KEY = True
+
+    def reset_keys(self):
+        self.UP_KEY, self.DOWN_KEY, self.SELECT_KEY, self.BACK_KEY = False, False, False, False
+
+    def draw_text(self, text, size, x, y):
+        font = pygame.font.Font(self.font_name, size)
+        text_surface = font.render(text, True, self.WHITE)
+        text_rect = text_surface.get_rect()
+        text_rect.center = (x, y)
+        self.canvaz.blit(text_surface, text_rect)
+
+    def drop(self):
+        self.time += 1
+        if self.time % 30 == 0:
+            self.asteroids.add(Asteroid())
+
+        if self.time == 300:
+            self.time = 0
+            self.powerups.add(Powerup(self.AROW))
+            self.powerups.add(Powerup(self.WASD))
 
 
 class Spacecraft(pygame.sprite.Sprite):

@@ -1,7 +1,11 @@
+import pygame
 import game
 
-g = game.Game()
+gamez = game.Game()
 
-while g.RUNNING:
-    g.PLAYING = True
-    g.game_loop()
+
+while gamez.RUNNING:
+
+    gamez.menu.display_menu()
+
+    gamez.loop()
