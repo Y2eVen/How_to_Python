@@ -16,7 +16,7 @@ except socket.error as e:
 s.listen(2)
 
 powerups = [("Health",0),("Shields",0)]
-pos = [(250, 437), (250, 62)]
+pos = [(640, 630), (640, 90)]
 shoot = [0,0]
 # rooms = []
 # waiter = None
@@ -25,6 +25,7 @@ print("Server is listening")
 
 def threaded_client(conn, player):
     conn.sendall(str.encode(str(player)))   
+    global powerups
     global currentPlayer
     reply = ""
     while True:
@@ -49,13 +50,14 @@ def threaded_client(conn, player):
                     
                     conn.sendall(str.encode(reply)) 
                 elif tokens[0] == "powerup":
-                    if player == 0:
-                        randX = random.randint(int(tokens[1]), int(tokens[2]))
+                    if player == 1:
+                        randX1 = random.randint(int(tokens[1]), int(tokens[2]))
+                        randX2 = random.randint(int(tokens[1]), int(tokens[2]))
                         power1 = random.choice(["Ammo", "Energy", "Health", "Shields"])
                         power2 = random.choice(["Ammo", "Energy", "Health", "Shields"])
                          
-                        powerups[0] = (power1, randX)
-                        powerups[1] = (power2, randX)
+                        powerups[0] = (power1, randX1)
+                        powerups[1] = (power2, randX2)
 #  
                     reply = f"{powerups[0]}.{powerups[1]}"
                     conn.sendall(str.encode(reply))    
@@ -73,10 +75,7 @@ def threaded_client(conn, player):
 #                 shoot[abs(player - 1)] = 0
         except:
             break
-    
-    print("lost connection")
-    conn.close() 
-    currentPlayer -= 1
+
 currentPlayer = 0
 while True:
     conn, addr = s.accept()

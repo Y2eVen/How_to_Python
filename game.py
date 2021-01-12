@@ -1,3 +1,4 @@
+
 """
 Cre: Lil Hoe, Ten Fingez
 """
@@ -898,3 +899,4 @@ class ClientSpacecraft(pygame.sprite.Sprite):
         mask_surf = mask.to_surface()
         mask_surf.set_colorkey(self.game.BLACK)
         draw(self.game.clientScreen)
+
