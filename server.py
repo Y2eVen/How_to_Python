@@ -73,10 +73,7 @@ def threaded_client(conn, player):
 #                 shoot[abs(player - 1)] = 0
         except:
             break
-    
-    print("lost connection")
-    conn.close() 
-    currentPlayer -= 1
+
 currentPlayer = 0
 while True:
     conn, addr = s.accept()
