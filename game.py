@@ -277,6 +277,7 @@ class Game:
                 if event.key == pygame.K_UP:
                     self.UP_KEY = True
                 if event.key == pygame.K_p:
+                    self.reset_keys()
                     self.paused = not self.paused
 
     def reset_keys(self):
