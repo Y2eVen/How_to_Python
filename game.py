@@ -245,12 +245,16 @@ class Game:
     def check_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                if hasattr(self, 'netWork'):
+                    self.netWork.close()
                 self.PLAYING = False
                 self.RUNNING = False
                 self.CLIENT = False
                 self.menu.run_display = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    if hasattr(self, 'netWork'):
+                        self.netWork.close()
                     self.PLAYING = False
                     self.RUNNING = False
                     self.CLIENT = False
