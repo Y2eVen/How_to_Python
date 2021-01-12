@@ -191,7 +191,7 @@ class Game:
                 self.powerups.draw(self.clientScreen) 
              
             pygame.display.update()
-
+        
     def create_spacecrafts(self):
         # create spacecrafts
         red_spacecraft = Spacecraft(self.AROW, self)
@@ -243,6 +243,8 @@ class Game:
                 self.menu.run_display = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    if hasattr(self, 'netWork'):
+                        self.netWork.close()
                     self.PLAYING = False
                     self.RUNNING = False
                     self.CLIENT = False
