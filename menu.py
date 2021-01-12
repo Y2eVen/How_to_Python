@@ -1,4 +1,5 @@
 import pygame
+from network import Network
 
 
 class Menu():
@@ -152,12 +153,10 @@ class StartMenu(Menu):
                 self.game.PLAYING = True
 
             elif self.state == 'Local':
-                #
-                #
-                # Local Game
-                #
-                #
-                pass
+                self.game.CLIENT = True
+                self.game.netWork = Network()
+                self.game.player = self.game.netWork.getPlayer()
+                self.game.waitting = 0
             elif self.state == 'Bot':
                 pass
             self.run_display = False
