@@ -16,7 +16,7 @@ class Game:
 
     # define
     CAPTION = "Game ban may bay 2 nguoi cuc manh"
-    ICON = "bullet_kin.jpg"
+    ICON = "joystick.png"
     BACKGROUND = "PixelSpaceRage/PixelBackgroundSeamlessVertically.png"
 
     # spacecrafts
@@ -108,6 +108,7 @@ class Game:
         self.options = OptionsMenu(self)
         self.credits = CreditsMenu(self)
         self.menu = self.main_menu
+        self.paused = False
 
     def loop(self):
 
@@ -116,18 +117,21 @@ class Game:
 
         while self.PLAYING:
 
-            self.draw_background()
-
             self.check_events()
 
-            self.drop()
+            self.draw_background()
 
-            self.spacecrafts.update()
-            self.bullets.update()
-            self.explosions.update()
-            self.exhausts.update()
-            self.powerups.update()
-            self.asteroids.update()
+            if self.paused:
+                continue
+            else:
+
+                self.drop()
+                self.spacecrafts.update()
+                self.bullets.update()
+                self.explosions.update()
+                self.exhausts.update()
+                self.powerups.update()
+                self.asteroids.update()
 
             self.draw_group(self.spacecrafts)
             self.draw_group(self.bullets)
@@ -178,6 +182,8 @@ class Game:
                     self.DOWN_KEY = True
                 if event.key == pygame.K_UP:
                     self.UP_KEY = True
+                if event.key == pygame.K_p:
+                    self.paused = not self.paused
 
     def reset_keys(self):
         self.UP_KEY, self.DOWN_KEY, self.SELECT_KEY, self.BACK_KEY = False, False, False, False
