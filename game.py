@@ -122,6 +122,8 @@ class Game:
         self.menu = self.main_menu
         self.pausez = PausedMenu(self)
         self.paused = False
+        self.gameover = GameoverMenu(self)
+        self.overtime = 0
 
         # bound of powerup spawn
         examplePowerup = pygame.image.load(
@@ -157,8 +159,9 @@ class Game:
             self.draw_group(self.powerups)
             self.asteroids.draw(self.window)
 
-            if self.paused:
+            self.game_over()
 
+            if self.paused:
                 self.pausez.display_menu()
 
             pygame.display.update()
@@ -303,6 +306,16 @@ class Game:
         self.powerups.empty()
         self.asteroids.empty()
 
+    def game_over(self):
+        if len(self.spacecrafts) < 2:
+            self.overtime += 1
+        if self.overtime == 50:
+
+            self.PLAYING = False
+            self.overtime = 0
+            self.reset_game()
+            self.menu = self.gameover
+
 
 class Spacecraft(pygame.sprite.Sprite):
     def __init__(self, control, game):
@@ -419,6 +432,7 @@ class Spacecraft(pygame.sprite.Sprite):
                 self.left_exhaust.kill()
                 self.right_exhaust.kill()
                 self.kill()
+
             pygame.draw.rect(surface, Game.WHITE, (x, y, w, h), 1)
 
         draw(Game.left_sub, self.rect.x, y, self.rect.width, 7)

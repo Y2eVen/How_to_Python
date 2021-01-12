@@ -268,7 +268,7 @@ class PausedMenu(Menu):
                 self.game.menu = self.game.main_menu
 
 
-class PausedMenu(Menu):
+class GameoverMenu(Menu):
     def __init__(self, game):
         Menu.__init__(self, game)
         self.state = 'New'
@@ -277,19 +277,20 @@ class PausedMenu(Menu):
         self.cursor_rect.midtop = (self.newx + self.offset, self.newy)
 
     def display_menu(self):
+        self.run_display = True
+        while self.run_display:
+            self.game.check_events()
+            self.check_input()
+            self.game.canvaz.fill((0, 0, 0))
 
-        self.game.check_events()
-        self.check_input()
-        self.game.canvaz.fill((0, 0, 0))
-
-        self.game.draw_text(
-            'Paused', self.font_size, self.game.WIDTH / 2, self.game.HEIGHT / 2 - (self.font_size + 10))
-        self.game.draw_text("New Game", self.font_size -
-                            10, self.newx, self.newy)
-        self.game.draw_text("Main Menu", self.font_size -
-                            10, self.menux, self.menuy)
-        self.draw_cursor()
-        self.blit_screen()
+            self.game.draw_text(
+                'Game over', self.font_size, self.game.WIDTH / 2, self.game.HEIGHT / 2 - (self.font_size + 10))
+            self.game.draw_text("New Game", self.font_size -
+                                10, self.newx, self.newy)
+            self.game.draw_text("Main Menu", self.font_size -
+                                10, self.menux, self.menuy)
+            self.draw_cursor()
+            self.blit_screen()
 
     def check_input(self):
         if self.game.BACK_KEY:
@@ -304,11 +305,8 @@ class PausedMenu(Menu):
                 self.cursor_rect.midtop = (self.newx + self.offset, self.newy)
         elif self.game.SELECT_KEY:
             if self.state == 'New':
-                self.game.reset_game()
-                self.game.create_spacecrafts()
-                self.game.paused = False
+                self.game.PLAYING = True
+
             elif self.state == 'Menu':
-                self.game.PLAYING = False
-                self.game.paused = False
-                self.game.reset_game()
                 self.game.menu = self.game.main_menu
+            self.run_display = False
