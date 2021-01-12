@@ -1,5 +1,4 @@
 import pygame
-from network import Network
 
 
 class Menu():
@@ -153,10 +152,12 @@ class StartMenu(Menu):
                 self.game.PLAYING = True
 
             elif self.state == 'Local':
-                self.game.CLIENT = True
-                self.game.netWork = Network()
-                self.game.player = self.game.netWork.getPlayer()
-                self.game.waitting = 0
+                #
+                #
+                # Local Game
+                #
+                #
+                pass
             elif self.state == 'Bot':
                 pass
             self.run_display = False
@@ -219,3 +220,95 @@ class CreditsMenu(Menu):
             self.game.draw_text(
                 'Made by Lil Hoe & Ten Fingez', self.font_size - 10, self.game.WIDTH / 2, self.game.HEIGHT / 2 + self.font_size//2)
             self.blit_screen()
+
+
+class PausedMenu(Menu):
+    def __init__(self, game):
+        Menu.__init__(self, game)
+        self.state = 'New'
+        self.newx, self.newy = self.mid_w, self.mid_h + self.font_size
+        self.menux, self.menuy = self.mid_w, self.mid_h + self.font_size * 2
+        self.cursor_rect.midtop = (self.newx + self.offset, self.newy)
+
+    def display_menu(self):
+
+        self.game.check_events()
+        self.check_input()
+        self.game.canvaz.fill((0, 0, 0))
+
+        self.game.draw_text(
+            'Paused', self.font_size, self.game.WIDTH / 2, self.game.HEIGHT / 2 - (self.font_size + 10))
+        self.game.draw_text("New Game", self.font_size -
+                            10, self.newx, self.newy)
+        self.game.draw_text("Main Menu", self.font_size -
+                            10, self.menux, self.menuy)
+        self.draw_cursor()
+        self.blit_screen()
+
+    def check_input(self):
+        if self.game.BACK_KEY:
+            pass
+        elif self.game.UP_KEY or self.game.DOWN_KEY:
+            if self.state == 'New':
+                self.state = 'Menu'
+                self.cursor_rect.midtop = (
+                    self.menux + self.offset, self.menuy)
+            elif self.state == 'Menu':
+                self.state = 'New'
+                self.cursor_rect.midtop = (self.newx + self.offset, self.newy)
+        elif self.game.SELECT_KEY:
+            if self.state == 'New':
+                self.game.reset_game()
+                self.game.create_spacecrafts()
+                self.game.paused = False
+            elif self.state == 'Menu':
+                self.game.PLAYING = False
+                self.game.paused = False
+                self.game.reset_game()
+                self.game.menu = self.game.main_menu
+
+
+class PausedMenu(Menu):
+    def __init__(self, game):
+        Menu.__init__(self, game)
+        self.state = 'New'
+        self.newx, self.newy = self.mid_w, self.mid_h + self.font_size
+        self.menux, self.menuy = self.mid_w, self.mid_h + self.font_size * 2
+        self.cursor_rect.midtop = (self.newx + self.offset, self.newy)
+
+    def display_menu(self):
+
+        self.game.check_events()
+        self.check_input()
+        self.game.canvaz.fill((0, 0, 0))
+
+        self.game.draw_text(
+            'Paused', self.font_size, self.game.WIDTH / 2, self.game.HEIGHT / 2 - (self.font_size + 10))
+        self.game.draw_text("New Game", self.font_size -
+                            10, self.newx, self.newy)
+        self.game.draw_text("Main Menu", self.font_size -
+                            10, self.menux, self.menuy)
+        self.draw_cursor()
+        self.blit_screen()
+
+    def check_input(self):
+        if self.game.BACK_KEY:
+            pass
+        elif self.game.UP_KEY or self.game.DOWN_KEY:
+            if self.state == 'New':
+                self.state = 'Menu'
+                self.cursor_rect.midtop = (
+                    self.menux + self.offset, self.menuy)
+            elif self.state == 'Menu':
+                self.state = 'New'
+                self.cursor_rect.midtop = (self.newx + self.offset, self.newy)
+        elif self.game.SELECT_KEY:
+            if self.state == 'New':
+                self.game.reset_game()
+                self.game.create_spacecrafts()
+                self.game.paused = False
+            elif self.state == 'Menu':
+                self.game.PLAYING = False
+                self.game.paused = False
+                self.game.reset_game()
+                self.game.menu = self.game.main_menu

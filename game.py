@@ -120,6 +120,8 @@ class Game:
         self.options = OptionsMenu(self)
         self.credits = CreditsMenu(self)
         self.menu = self.main_menu
+        self.pausez = PausedMenu(self)
+        self.paused = False
 
         # bound of powerup spawn
         examplePowerup = pygame.image.load(
@@ -136,18 +138,17 @@ class Game:
 
         while self.PLAYING:
 
+            self.check_events()
             self.draw_background()
 
-            self.check_events()
-
-            self.drop()
-
-            self.spacecrafts.update()
-            self.bullets.update()
-            self.explosions.update()
-            self.exhausts.update()
-            self.powerups.update()
-            self.asteroids.update()
+            if not self.paused:
+                self.drop()
+                self.spacecrafts.update()
+                self.bullets.update()
+                self.explosions.update()
+                self.exhausts.update()
+                self.powerups.update()
+                self.asteroids.update()
 
             self.draw_group(self.spacecrafts)
             self.draw_group(self.bullets)
@@ -155,6 +156,10 @@ class Game:
             self.draw_group(self.exhausts)
             self.draw_group(self.powerups)
             self.asteroids.draw(self.window)
+
+            if self.paused:
+
+                self.pausez.display_menu()
 
             pygame.display.update()
             self.clock.tick(self.FPS)
@@ -267,6 +272,8 @@ class Game:
                     self.DOWN_KEY = True
                 if event.key == pygame.K_UP:
                     self.UP_KEY = True
+                if event.key == pygame.K_p:
+                    self.paused = not self.paused
 
     def reset_keys(self):
         self.UP_KEY, self.DOWN_KEY, self.SELECT_KEY, self.BACK_KEY = False, False, False, False
@@ -287,6 +294,14 @@ class Game:
             self.time = 0
             self.powerups.add(Powerup(self.AROW))
             self.powerups.add(Powerup(self.WASD))
+
+    def reset_game(self):
+        self.spacecrafts.empty()
+        self.bullets.empty()
+        self.explosions.empty()
+        self.exhausts.empty()
+        self.powerups.empty()
+        self.asteroids.empty()
 
 
 class Spacecraft(pygame.sprite.Sprite):
