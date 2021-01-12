@@ -1,4 +1,5 @@
 import pygame
+from network import Network
 
 
 class Menu():
