@@ -1,3 +1,4 @@
+
 """
 Cre: Lil Hoe, Ten Fingez
 """
@@ -10,13 +11,14 @@ from network import Network
 
 from menu import *
 
+
 class Game:
 
     pygame.init()
 
     # define
     CAPTION = "Game ban may bay 2 nguoi cuc manh"
-    ICON = "bullet_kin.jpg"
+    ICON = "joystick.png"
     BACKGROUND = "PixelSpaceRage/PixelBackgroundSeamlessVertically.png"
 
     # spacecrafts
@@ -71,17 +73,18 @@ class Game:
     left_sub = canvas.subsurface(left_rect)
     right_sub = canvas.subsurface(right_rect)
 
-    # create client's surface 
+    # create client's surface
     canvas = pygame.Surface((2*WIDTH, 2*HEIGHT))
     screen_rect = pygame.Rect(0, 0, WIDTH, HEIGHT)
     clientScreen = canvas.subsurface(screen_rect)
-    
+
     # load background
     background = pygame.transform.scale(
         pygame.image.load(BACKGROUND), (WIDTH//2, HEIGHT))
-    
+
     # load client's background
-    clientBackground = pygame.transform.scale(pygame.image.load(BACKGROUND), (WIDTH, HEIGHT))
+    clientBackground = pygame.transform.scale(
+        pygame.image.load(BACKGROUND), (WIDTH, HEIGHT))
 
     # caption and icon
     pygame.display.set_caption(CAPTION)
@@ -118,9 +121,14 @@ class Game:
         self.options = OptionsMenu(self)
         self.credits = CreditsMenu(self)
         self.menu = self.main_menu
-        
+        self.pausez = PausedMenu(self)
+        self.paused = False
+        self.gameover = GameoverMenu(self)
+        self.overtime = 0
+
         # bound of powerup spawn
-        examplePowerup = pygame.image.load("PixelSpaceRage/256px/Powerup_Ammo_png_processed.png")
+        examplePowerup = pygame.image.load(
+            "PixelSpaceRage/256px/Powerup_Ammo_png_processed.png")
         self.leftBoundP = examplePowerup.get_rect().w*3//2
         self.rightBoundP = self.WIDTH - examplePowerup.get_rect().w*3//2
 
@@ -130,21 +138,20 @@ class Game:
             self.create_spacecrafts()
         if self.CLIENT:
             self.create_client_spacecrafts()
-        
+
         while self.PLAYING:
-            
-            self.draw_background()
 
             self.check_events()
+            self.draw_background()
 
-            self.drop()
-
-            self.spacecrafts.update()
-            self.bullets.update()
-            self.explosions.update()
-            self.exhausts.update()
-            self.powerups.update()
-            self.asteroids.update()
+            if not self.paused:
+                self.drop()
+                self.spacecrafts.update()
+                self.bullets.update()
+                self.explosions.update()
+                self.exhausts.update()
+                self.powerups.update()
+                self.asteroids.update()
 
             self.draw_group(self.spacecrafts)
             self.draw_group(self.bullets)
@@ -153,45 +160,53 @@ class Game:
             self.draw_group(self.powerups)
             self.asteroids.draw(self.window)
 
+            self.game_over()
+
+            if self.paused:
+                self.pausez.display_menu()
+
             pygame.display.update()
             self.clock.tick(self.FPS)
-            
+
         while self.CLIENT:
             self.clock.tick(self.FPS)
-    
+
             self.draw_client_background()
-            
-            self.check_events()    
-            
+
+            self.check_events()
+
             self.waitting = int(self.netWork.send("waitting."))
-            if self.waitting:       
+            if self.waitting:
                 self.showWaittingText()
-            else:           
+            else:
                 self.time += 1
                 if self.time == 300:
                     self.time = 0
-                    data = self.netWork.send(f"powerup.{self.leftBoundP}.{self.rightBoundP}")
+                    data = self.netWork.send(
+                        f"powerup.{self.leftBoundP}.{self.rightBoundP}")
                     tokens = data.split(".")
-                      
+
                     tuple1 = eval(tokens[0])
                     tuple2 = eval(tokens[1])
-                    self.powerups.add(ClientPowerup(self.AROW, tuple1[0], tuple1[1], self))
-                    self.powerups.add(ClientPowerup(self.WASD, tuple2[0], tuple2[1], self))
-                         
+                    self.powerups.add(ClientPowerup(
+                        self.AROW, tuple1[0], tuple1[1], self))
+                    self.powerups.add(ClientPowerup(
+                        self.WASD, tuple2[0], tuple2[1], self))
+
                 self.spacecrafts.update()
                 self.bullets.update()
                 self.explosions.update()
                 self.exhausts.update()
                 self.powerups.update()
-                  
-                self.bullets.draw(self.clientScreen)             
+
+                self.bullets.draw(self.clientScreen)
                 self.spacecrafts.draw(self.clientScreen)
-                self.explosions.draw(self.clientScreen) 
-                self.exhausts.draw(self.clientScreen) 
-                self.powerups.draw(self.clientScreen) 
-             
+                self.explosions.draw(self.clientScreen)
+                self.exhausts.draw(self.clientScreen)
+                self.powerups.draw(self.clientScreen)
+
             pygame.display.update()
-        
+
     def create_spacecrafts(self):
         # create spacecrafts
         red_spacecraft = Spacecraft(self.AROW, self)
@@ -199,7 +214,7 @@ class Game:
 
         self.spacecrafts.add(red_spacecraft)
         self.spacecrafts.add(blue_spacecraft)
-        
+
     def create_client_spacecrafts(self):
         # create spacecrafts
         self.red_spacecraft = ClientSpacecraft(self.AROW, self)
@@ -215,20 +230,22 @@ class Game:
 
         self.left_sub.blit(self.background, (0, 0))
         self.right_sub.blit(self.background, (0, 0))
-        
+
     def draw_client_background(self):
         if self.player == 0:
             self.window.blit(self.clientScreen, (0, 0))
         else:
-            self.window.blit(pygame.transform.rotate(self.clientScreen, 180), (0, 0))
+            self.window.blit(pygame.transform.rotate(
+                self.clientScreen, 180), (0, 0))
         self.clientScreen.blit(self.clientBackground, (0, 0))
-    
+
     def showWaittingText(self):
         text = "Waitting for another player ..."
         font = pygame.font.Font(self.font_name, 32)
         textWidth, textHeight = font.size(text)
         waittingText = font.render(text, True, self.YELLOW)
-        self.window.blit(waittingText, (self.WIDTH//2 - textWidth//2, self.HEIGHT//2 - textHeight//2))
+        self.window.blit(waittingText, (self.WIDTH//2 -
+                                        textWidth//2, self.HEIGHT//2 - textHeight//2))
 
     def draw_group(self, groups):
         groups.draw(self.left_sub)
@@ -237,6 +254,8 @@ class Game:
     def check_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                if hasattr(self, 'netWork'):
+                    self.netWork.close()
                 self.PLAYING = False
                 self.RUNNING = False
                 self.CLIENT = False
@@ -257,6 +276,8 @@ class Game:
                     self.DOWN_KEY = True
                 if event.key == pygame.K_UP:
                     self.UP_KEY = True
+                if event.key == pygame.K_p:
+                    self.paused = not self.paused
 
     def reset_keys(self):
         self.UP_KEY, self.DOWN_KEY, self.SELECT_KEY, self.BACK_KEY = False, False, False, False
@@ -277,6 +298,24 @@ class Game:
             self.time = 0
             self.powerups.add(Powerup(self.AROW))
             self.powerups.add(Powerup(self.WASD))
+
+    def reset_game(self):
+        self.spacecrafts.empty()
+        self.bullets.empty()
+        self.explosions.empty()
+        self.exhausts.empty()
+        self.powerups.empty()
+        self.asteroids.empty()
+
+    def game_over(self):
+        if len(self.spacecrafts) < 2:
+            self.overtime += 1
+        if self.overtime == 50:
+
+            self.PLAYING = False
+            self.overtime = 0
+            self.reset_game()
+            self.menu = self.gameover
 
 
 class Spacecraft(pygame.sprite.Sprite):
@@ -394,6 +433,7 @@ class Spacecraft(pygame.sprite.Sprite):
                 self.left_exhaust.kill()
                 self.right_exhaust.kill()
                 self.kill()
+
             pygame.draw.rect(surface, Game.WHITE, (x, y, w, h), 1)
 
         draw(Game.left_sub, self.rect.x, y, self.rect.width, 7)
@@ -448,7 +488,7 @@ class Bullet(pygame.sprite.Sprite):
         if self.game.PLAYING:
             if (self.rect.left < 0 or self.rect.right > Game.WIDTH // 2 or self.rect.bottom < 0 or self.rect.top > Game.HEIGHT):
                 self.kill()
-        elif self.game.CLIENT: 
+        elif self.game.CLIENT:
             if (self.rect.left < 0 or self.rect.right > Game.WIDTH or self.rect.bottom < 0 or self.rect.top > Game.HEIGHT):
                 self.kill()
         collide = pygame.sprite.spritecollideany(
@@ -631,7 +671,8 @@ class Asteroid(pygame.sprite.Sprite):
                 if self.speed > 1:
                     self.speed -= 1
                 collide.speed += 1
-                
+
+
 class ClientPowerup(pygame.sprite.Sprite):
     def __init__(self, control, choice, x, game):
         pygame.sprite.Sprite.__init__(self)
@@ -639,7 +680,8 @@ class ClientPowerup(pygame.sprite.Sprite):
         self.game = game
         self.control = control
         self.power = choice
-        img = pygame.image.load(f"PixelSpaceRage/256px/Powerup_{self.power}_png_processed.png")
+        img = pygame.image.load(
+            f"PixelSpaceRage/256px/Powerup_{self.power}_png_processed.png")
         if self.control == Game.AROW:
             self.image = img
         elif self.control == Game.WASD:
@@ -677,7 +719,8 @@ class ClientPowerup(pygame.sprite.Sprite):
                     collide.shield = 1
 
             self.kill()
-            
+
+
 class ClientSpacecraft(pygame.sprite.Sprite):
     def __init__(self, control, game):
         pygame.sprite.Sprite.__init__(self)
@@ -690,7 +733,8 @@ class ClientSpacecraft(pygame.sprite.Sprite):
             self.image = pygame.transform.rotate(
                 pygame.image.load(Game.PLAYER_BLUE), 180)
         self.rect = self.image.get_rect()
-        self.rect.center = [Game.WIDTH//2, (4 + control * 3) * Game.HEIGHT // 8]
+        self.rect.center = [Game.WIDTH//2,
+                            (4 + control * 3) * Game.HEIGHT // 8]
         self.health = 10
         self.max_health = 10
         self.speed = 6
@@ -704,18 +748,18 @@ class ClientSpacecraft(pygame.sprite.Sprite):
         self.right_exhaust = Exhaust(self, Game.RIGHT_EXHAUST)
         self.game.exhausts.add(self.right_exhaust)
         self.game.exhausts.add(self.left_exhaust)
-        
+
     def update(self):
 
         self.move()
 
         self.shoot()
- 
+
         self.health_bar()
- 
+
         if self.shield:
             self.shield_up()
-            
+
     def move(self):
         pressed = pygame.key.get_pressed()
 
@@ -748,52 +792,59 @@ class ClientSpacecraft(pygame.sprite.Sprite):
                 self.rect.left = 0
         if right:
             self.rect.x += self.speed
-            if self.rect.right > Game.WIDTH :
+            if self.rect.right > Game.WIDTH:
                 self.rect.right = Game.WIDTH
-        
+
         if self.game.player == 0:
-            data = self.game.netWork.send(f"move.{self.game.red_spacecraft.rect.center}")
+            data = self.game.netWork.send(
+                f"move.{self.game.red_spacecraft.rect.center}")
             enemyPosition = eval(data)
             self.game.blue_spacecraft.moveByPos(enemyPosition)
         else:
-            data = self.game.netWork.send(f"move.{self.game.blue_spacecraft.rect.center}")
+            data = self.game.netWork.send(
+                f"move.{self.game.blue_spacecraft.rect.center}")
             enemyPosition = eval(data)
             self.game.red_spacecraft.moveByPos(enemyPosition)
-    
+
     def moveByPos(self, pos):
         self.rect.center = pos
-        
+
     def shoot(self):
         now = pygame.time.get_ticks()
         pressed = pygame.key.get_pressed()
         pressed_key = pressed[pygame.K_RETURN]
         if self.control == Game.WASD:
             pressed_key = pressed[pygame.K_SPACE]
-        
+
         shootMode = 0
         if (self.game.player == 0 and self == self.game.red_spacecraft) or (self.game.player == 1 and self == self.game.blue_spacecraft):
             if pressed_key and now - self.last_shot > self.cooldown:
                 shootMode = 1
                 self.game.shoot_fx.play()
                 if self.bullets_level == 1:
-                    self.game.bullets.add(Bullet(self, Game.TOP_BULLET, self.game))
+                    self.game.bullets.add(
+                        Bullet(self, Game.TOP_BULLET, self.game))
                 elif self.bullets_level == 2:
-                    self.game.bullets.add(Bullet(self, Game.LEFT_BULLET, self.game))
-                    self.game.bullets.add(Bullet(self, Game.RIGHT_BULLET, self.game))
+                    self.game.bullets.add(
+                        Bullet(self, Game.LEFT_BULLET, self.game))
+                    self.game.bullets.add(
+                        Bullet(self, Game.RIGHT_BULLET, self.game))
                 elif self.bullets_level == 3:
-                    self.game.bullets.add(Bullet(self, Game.TOP_BULLET, self.game))
-                    self.game.bullets.add(Bullet(self, Game.LEFT_BULLET, self.game))
-                    self.game.bullets.add(Bullet(self, Game.RIGHT_BULLET, self.game))
+                    self.game.bullets.add(
+                        Bullet(self, Game.TOP_BULLET, self.game))
+                    self.game.bullets.add(
+                        Bullet(self, Game.LEFT_BULLET, self.game))
+                    self.game.bullets.add(
+                        Bullet(self, Game.RIGHT_BULLET, self.game))
                 self.last_shot = now
-            
-        
+
         data = self.game.netWork.send(f"shoot.{shootMode}")
         enemyShootMode = int(data)
         if self.game.player == 0:
             self.game.blue_spacecraft.shootByMode(enemyShootMode)
         else:
             self.game.red_spacecraft.shootByMode(enemyShootMode)
-            
+
     def shootByMode(self, mode):
         now = pygame.time.get_ticks()
         if mode == 1 and now - self.last_shot > self.cooldown:
@@ -801,19 +852,23 @@ class ClientSpacecraft(pygame.sprite.Sprite):
             if self.bullets_level == 1:
                 self.game.bullets.add(Bullet(self, Game.TOP_BULLET, self.game))
             elif self.bullets_level == 2:
-                self.game.bullets.add(Bullet(self, Game.LEFT_BULLET, self.game))
-                self.game.bullets.add(Bullet(self, Game.RIGHT_BULLET, self.game))
+                self.game.bullets.add(
+                    Bullet(self, Game.LEFT_BULLET, self.game))
+                self.game.bullets.add(
+                    Bullet(self, Game.RIGHT_BULLET, self.game))
             elif self.bullets_level == 3:
                 self.game.bullets.add(Bullet(self, Game.TOP_BULLET, self.game))
-                self.game.bullets.add(Bullet(self, Game.LEFT_BULLET, self.game))
-                self.game.bullets.add(Bullet(self, Game.RIGHT_BULLET, self.game))
+                self.game.bullets.add(
+                    Bullet(self, Game.LEFT_BULLET, self.game))
+                self.game.bullets.add(
+                    Bullet(self, Game.RIGHT_BULLET, self.game))
             self.last_shot = now
- 
+
     def health_bar(self):
         y = self.rect.bottom + 7
         if self.control == self.game.WASD:
             y = self.rect.top - 14
- 
+
         def draw(surface, x, y, w, h):
             pygame.draw.rect(surface, self.game.RED, (x, y, w, h))
             t = x
@@ -830,17 +885,18 @@ class ClientSpacecraft(pygame.sprite.Sprite):
                 self.right_exhaust.kill()
                 self.kill()
             pygame.draw.rect(surface, self.game.WHITE, (x, y, w, h), 1)
- 
+
         draw(self.game.clientScreen, self.rect.x, y, self.rect.width, 7)
- 
+
     def shield_up(self):
         def draw(surface):
             surface.blit(mask_surf, (self.rect.x - 2, self.rect.y))
             surface.blit(mask_surf, (self.rect.x + 2, self.rect.y))
             surface.blit(mask_surf, (self.rect.x, self.rect.y - 2))
             surface.blit(mask_surf, (self.rect.x, self.rect.y + 2))
- 
+
         mask = pygame.mask.from_surface(self.image)
         mask_surf = mask.to_surface()
         mask_surf.set_colorkey(self.game.BLACK)
         draw(self.game.clientScreen)
+
