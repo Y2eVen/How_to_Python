@@ -2,6 +2,9 @@ import socket
 from _thread import *
 import sys
 import random
+import tkinter as tk
+
+root = tk.Tk()
 
 server = socket.gethostbyname_ex(socket.gethostname())[-1][0]
 print(server)
@@ -14,17 +17,24 @@ except socket.error as e:
     str(e)
     
 s.listen(2)
-
-powerups = [("Health",0),("Shields",0)]
+time = 0
+powerups = [0,0]
 pos = [(640, 630), (640, 90)]
 shoot = [0,0]
-# rooms = []
-# waiter = None
+
+# bound of powerup spawn
+WIDTH = root.winfo_screenwidth()
+leftBoundP = 48
+rightBoundP = WIDTH - 48
 
 print("Server is listening")
 
 def threaded_client(conn, player):
     conn.sendall(str.encode(str(player)))   
+    global leftBoundP
+    global rightBoundP
+    global ready
+    global time
     global powerups
     global currentPlayer
     reply = ""
@@ -50,29 +60,27 @@ def threaded_client(conn, player):
                     
                     conn.sendall(str.encode(reply)) 
                 elif tokens[0] == "powerup":
-                    if player == 1:
-                        randX1 = random.randint(int(tokens[1]), int(tokens[2]))
-                        randX2 = random.randint(int(tokens[1]), int(tokens[2]))
+                    if player == 0:
+                        randX1 = random.randint(leftBoundP, rightBoundP)
+                        randX2 = random.randint(leftBoundP, rightBoundP)
                         power1 = random.choice(["Ammo", "Energy", "Health", "Shields"])
                         power2 = random.choice(["Ammo", "Energy", "Health", "Shields"])
-                         
+                          
                         powerups[0] = (power1, randX1)
                         powerups[1] = (power2, randX2)
-#  
+                        
                     reply = f"{powerups[0]}.{powerups[1]}"
                     conn.sendall(str.encode(reply))    
+                    if player == 1:
+                        powerups[0] = 0
+                        powerups[1] = 0
+                        
                 elif tokens[0] == "waitting":
                     conn.send(str.encode(reply))
                 elif tokens[0] == "close":
                     print("lost connection")
                     conn.close() 
                     currentPlayer -= 1
-#                 print("Current Player: ", currentPlayer)
-#                 print("Received: ", data)
-#                 print("Sended: " , reply)
-                    
-                   
-#                 shoot[abs(player - 1)] = 0
         except:
             break
 
@@ -83,12 +91,3 @@ while True:
     
     start_new_thread(threaded_client, (conn, currentPlayer))
     currentPlayer += 1
-#     if (waiter):
-#         rooms.append((waiter, clientsocket))
-#     else:
-#         waiter = clientsocket
-#         
-#     if len(rooms) >= 1:    
-#         rooms[0][0].send(bytes("Welcome to server! Hi mother fucker", "utf-8" ))
-        
-#     waiter.send(bytes("loop message", "utf-8" ))

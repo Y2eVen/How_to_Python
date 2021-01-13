@@ -56,7 +56,7 @@ class Game:
 
     # fps
     clock = pygame.time.Clock()
-    FPS = 30
+    FPS = 60
 
     # create full window
     window = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
@@ -129,8 +129,8 @@ class Game:
         # bound of powerup spawn
         examplePowerup = pygame.image.load(
             "PixelSpaceRage/256px/Powerup_Ammo_png_processed.png")
-        self.leftBoundP = examplePowerup.get_rect().w*3//2
-        self.rightBoundP = self.WIDTH - examplePowerup.get_rect().w*3//2
+        self.leftBoundP = examplePowerup.get_rect().w
+        self.rightBoundP = self.WIDTH - examplePowerup.get_rect().w
 
     def loop(self):
 
@@ -167,7 +167,7 @@ class Game:
 
             pygame.display.update()
             self.clock.tick(self.FPS)
-
+            
         while self.CLIENT:
             self.clock.tick(self.FPS)
 
@@ -179,20 +179,33 @@ class Game:
             if self.waitting:
                 self.showWaittingText()
             else:
-                self.time += 1
-                if self.time == 300:
-                    self.time = 0
+                if self.player == 0:
+                    self.time += 1
+                    if self.time == 300:
+                        self.time = 0
+                        data = self.netWork.send(
+                            f"powerup.{self.leftBoundP}.{self.rightBoundP}")
+                        tokens = data.split(".")
+    
+                        tuple1 = eval(tokens[0])
+                        tuple2 = eval(tokens[1])
+                        self.powerups.add(ClientPowerup(
+                            self.AROW, tuple1[0], tuple1[1], self))
+                        self.powerups.add(ClientPowerup(
+                            self.WASD, tuple2[0], tuple2[1], self))
+                else:
                     data = self.netWork.send(
-                        f"powerup.{self.leftBoundP}.{self.rightBoundP}")
-                    tokens = data.split(".")
-
-                    tuple1 = eval(tokens[0])
-                    tuple2 = eval(tokens[1])
-                    self.powerups.add(ClientPowerup(
-                        self.AROW, tuple1[0], tuple1[1], self))
-                    self.powerups.add(ClientPowerup(
-                        self.WASD, tuple2[0], tuple2[1], self))
-
+                            f"powerup.{self.leftBoundP}.{self.rightBoundP}")
+                    if data != "0.0":
+                        tokens = data.split(".")
+        
+                        tuple1 = eval(tokens[0])
+                        tuple2 = eval(tokens[1])
+                        self.powerups.add(ClientPowerup(
+                            self.AROW, tuple1[0], tuple1[1], self))
+                        self.powerups.add(ClientPowerup(
+                            self.WASD, tuple2[0], tuple2[1], self))
+                    
                 self.spacecrafts.update()
                 self.bullets.update()
                 self.explosions.update()
