@@ -56,7 +56,7 @@ class Game:
 
     # fps
     clock = pygame.time.Clock()
-    FPS = 30
+    FPS = 360
 
     # create full window
     window = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
@@ -74,17 +74,15 @@ class Game:
     right_sub = canvas.subsurface(right_rect)
 
     # create client's surface
-    canvas = pygame.Surface((2*WIDTH, 2*HEIGHT))
-    screen_rect = pygame.Rect(0, 0, WIDTH, HEIGHT)
-    clientScreen = canvas.subsurface(screen_rect)
+    clientScreen = pygame.Surface((WIDTH, HEIGHT))
 
     # load background
     background = pygame.transform.scale(
         pygame.image.load(BACKGROUND), (WIDTH//2, HEIGHT))
 
     # load client's background
-    clientBackground = pygame.transform.scale(
-        pygame.image.load(BACKGROUND), (WIDTH, HEIGHT))
+    clientBackground = pygame.transform.scale(pygame.transform.rotate(
+        pygame.image.load(BACKGROUND), 90), (WIDTH, HEIGHT))
 
     # caption and icon
     pygame.display.set_caption(CAPTION)
@@ -108,6 +106,7 @@ class Game:
     exhausts = pygame.sprite.Group()
     powerups = pygame.sprite.Group()
     asteroids = pygame.sprite.Group()
+    asteroidz = pygame.sprite.Group()
 
     def __init__(self):
         self.RUNNING = True
@@ -129,8 +128,8 @@ class Game:
         # bound of powerup spawn
         examplePowerup = pygame.image.load(
             "PixelSpaceRage/256px/Powerup_Ammo_png_processed.png")
-        self.leftBoundP = examplePowerup.get_rect().w*3//2
-        self.rightBoundP = self.WIDTH - examplePowerup.get_rect().w*3//2
+        self.leftBoundP = examplePowerup.get_rect().w
+        self.rightBoundP = self.WIDTH - examplePowerup.get_rect().w
 
     def loop(self):
 
@@ -152,13 +151,15 @@ class Game:
                 self.exhausts.update()
                 self.powerups.update()
                 self.asteroids.update()
+                self.asteroidz.update()
 
             self.draw_group(self.spacecrafts)
-            self.draw_group(self.bullets)
-            self.draw_group(self.explosions)
             self.draw_group(self.exhausts)
             self.draw_group(self.powerups)
             self.asteroids.draw(self.window)
+            self.draw_group(self.asteroidz)
+            self.draw_group(self.bullets)
+            self.draw_group(self.explosions)
 
             self.game_over()
 
@@ -179,19 +180,32 @@ class Game:
             if self.waitting:
                 self.showWaittingText()
             else:
-                self.time += 1
-                if self.time == 300:
-                    self.time = 0
+                if self.player == 0:
+                    self.time += 1
+                    if self.time == 300:
+                        self.time = 0
+                        data = self.netWork.send(
+                            f"powerup.{self.leftBoundP}.{self.rightBoundP}")
+                        tokens = data.split(".")
+
+                        tuple1 = eval(tokens[0])
+                        tuple2 = eval(tokens[1])
+                        self.powerups.add(ClientPowerup(
+                            self.AROW, tuple1[0], tuple1[1], self))
+                        self.powerups.add(ClientPowerup(
+                            self.WASD, tuple2[0], tuple2[1], self))
+                else:
                     data = self.netWork.send(
                         f"powerup.{self.leftBoundP}.{self.rightBoundP}")
-                    tokens = data.split(".")
+                    if data != "0.0":
+                        tokens = data.split(".")
 
-                    tuple1 = eval(tokens[0])
-                    tuple2 = eval(tokens[1])
-                    self.powerups.add(ClientPowerup(
-                        self.AROW, tuple1[0], tuple1[1], self))
-                    self.powerups.add(ClientPowerup(
-                        self.WASD, tuple2[0], tuple2[1], self))
+                        tuple1 = eval(tokens[0])
+                        tuple2 = eval(tokens[1])
+                        self.powerups.add(ClientPowerup(
+                            self.AROW, tuple1[0], tuple1[1], self))
+                        self.powerups.add(ClientPowerup(
+                            self.WASD, tuple2[0], tuple2[1], self))
 
                 self.spacecrafts.update()
                 self.bullets.update()
@@ -211,6 +225,7 @@ class Game:
         # create spacecrafts
         red_spacecraft = Spacecraft(self.AROW, self)
         blue_spacecraft = Spacecraft(self.WASD, self)
+        
 
         self.spacecrafts.add(red_spacecraft)
         self.spacecrafts.add(blue_spacecraft)
@@ -219,6 +234,7 @@ class Game:
         # create spacecrafts
         self.red_spacecraft = ClientSpacecraft(self.AROW, self)
         self.blue_spacecraft = ClientSpacecraft(self.WASD, self)
+
 
         self.spacecrafts.add(self.red_spacecraft)
         self.spacecrafts.add(self.blue_spacecraft)
@@ -240,12 +256,12 @@ class Game:
         self.clientScreen.blit(self.clientBackground, (0, 0))
 
     def showWaittingText(self):
-        text = "Waitting for another player ..."
-        font = pygame.font.Font(self.font_name, 32)
+        text = "Waitting for another player..."
+        font = pygame.font.Font(self.font_name, 40)
         textWidth, textHeight = font.size(text)
         waittingText = font.render(text, True, self.YELLOW)
-        self.window.blit(waittingText, (self.WIDTH//2 -
-                                        textWidth//2, self.HEIGHT//2 - textHeight//2))
+        self.clientScreen.blit(waittingText, (self.WIDTH//2 -
+                                              textWidth//2, self.HEIGHT//2 - textHeight//2))
 
     def draw_group(self, groups):
         groups.draw(self.left_sub)
@@ -277,6 +293,7 @@ class Game:
                 if event.key == pygame.K_UP:
                     self.UP_KEY = True
                 if event.key == pygame.K_p:
+                    self.reset_keys()
                     self.paused = not self.paused
 
     def reset_keys(self):
@@ -294,10 +311,20 @@ class Game:
         if self.time % 30 == 0:
             self.asteroids.add(Asteroid())
 
+        if self.time == 200:
+            self.drop_asteroids()
+
         if self.time == 300:
             self.time = 0
             self.powerups.add(Powerup(self.AROW))
             self.powerups.add(Powerup(self.WASD))
+
+    def drop_asteroids(self):
+        xa = random.randint(50, self.WIDTH//2 - 50)
+        xw = random.randint(50, self.WIDTH//2 - 50)
+        y = self.HEIGHT//2
+        self.asteroidz.add(Asteroid(x=xa, y=y))
+        self.asteroidz.add(Asteroid(x=xw, y=y, control=self.WASD))
 
     def reset_game(self):
         self.spacecrafts.empty()
@@ -306,6 +333,7 @@ class Game:
         self.exhausts.empty()
         self.powerups.empty()
         self.asteroids.empty()
+        self.asteroidz.empty()
 
     def game_over(self):
         if len(self.spacecrafts) < 2:
@@ -315,6 +343,7 @@ class Game:
             self.PLAYING = False
             self.overtime = 0
             self.reset_game()
+            self.reset_keys()
             self.menu = self.gameover
 
 
@@ -428,10 +457,11 @@ class Spacecraft(pygame.sprite.Sprite):
                     surface, Game.GREEN, (t, y, int(w * self.health//self.max_health), h))
             else:
                 explosion = Explosion(
-                    self.control, self.rect.centerx, self.rect.centery, 2)
+                    self.control, self.rect.centerx, self.rect.centery, 3)
                 Game.explosions.add(explosion)
                 self.left_exhaust.kill()
                 self.right_exhaust.kill()
+                
                 self.kill()
 
             pygame.draw.rect(surface, Game.WHITE, (x, y, w, h), 1)
@@ -491,21 +521,30 @@ class Bullet(pygame.sprite.Sprite):
         elif self.game.CLIENT:
             if (self.rect.left < 0 or self.rect.right > Game.WIDTH or self.rect.bottom < 0 or self.rect.top > Game.HEIGHT):
                 self.kill()
-        collide = pygame.sprite.spritecollideany(
+        collides = pygame.sprite.spritecollideany(
             self, Game.spacecrafts, pygame.sprite.collide_mask)
 
-        if collide:
-            if collide != self.spacecraft:
+        if collides:
+            if collides != self.spacecraft:
                 self.kill()
-                if collide.shield:
-                    collide.shield = 0
+                if collides.shield:
+                    collides.shield = 0
                 else:
-                    collide.health -= 1
+                    collides.health -= 1
                 Game.explosion_fx.play()
                 explosion = Explosion(
                     self.spacecraft.control, self.rect.centerx, self.rect.centery, 1)
                 Game.explosions.add(explosion)
 
+        collidea = pygame.sprite.spritecollideany(
+            self, Game.asteroidz, pygame.sprite.collide_mask)
+
+        if collidea:
+            self.kill()
+            Game.explosion_fx.play()
+            explosion = Explosion(
+                    self.spacecraft.control, self.rect.centerx, self.rect.centery, 1)
+            Game.explosions.add(explosion)
 
 class Explosion(pygame.sprite.Sprite):
     def __init__(self, control, x, y, size):
@@ -520,6 +559,8 @@ class Explosion(pygame.sprite.Sprite):
             if size == 1:
                 img = pygame.transform.scale(img, (25, 25))
             elif size == 2:
+                img = pygame.transform.scale(img, (50, 50))    
+            elif size == 3:
                 img = pygame.transform.scale(img, (160, 160))
 
             self.images.append(img)
@@ -637,11 +678,12 @@ class Powerup(pygame.sprite.Sprite):
 
 
 class Asteroid(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, x = Game.WIDTH//2, y = 0, control = Game.AROW):
         pygame.sprite.Sprite.__init__(self)
 
-        self.x = Game.WIDTH//2
-        self.y = 0
+        self.x = x
+        self.y = y
+        self.control = control
         num = random.randint(1, 4)
         self.raw_image = pygame.image.load(
             f"PixelSpaceRage/256px/Asteroid 0{num}_png_processed.png")
@@ -654,7 +696,7 @@ class Asteroid(pygame.sprite.Sprite):
 
     def update(self):
 
-        self.rect.y += self.speed
+        self.rect.y += self.control * self.speed
         self.angle += self.speed
 
         self.image = pygame.transform.rotate(self.raw_image, self.angle)
@@ -663,14 +705,27 @@ class Asteroid(pygame.sprite.Sprite):
         if self.rect.top > Game.HEIGHT or self.rect.bottom < 0:
             self.kill()
 
-        collide = pygame.sprite.spritecollideany(
+        collide_a = pygame.sprite.spritecollideany(
             self, Game.asteroids, pygame.sprite.collide_mask)
 
-        if collide:
-            if collide != self:
+        if collide_a:
+            if collide_a != self:
                 if self.speed > 1:
                     self.speed -= 1
-                collide.speed += 1
+                collide_a.speed += 1
+
+        collide_s = pygame.sprite.spritecollideany(
+            self, Game.spacecrafts, pygame.sprite.collide_mask)
+
+        if collide_s and self.x != Game.WIDTH//2:
+            self.kill()
+            if collide_s.shield:
+                collide_s.shield = 0
+            else:
+                collide_s.health -= 2
+            Game.explosion_fx.play()
+            explosion = Explosion(self.control, self.rect.centerx, self.rect.centery, 2)
+            Game.explosions.add(explosion)
 
 
 class ClientPowerup(pygame.sprite.Sprite):
@@ -879,7 +934,7 @@ class ClientSpacecraft(pygame.sprite.Sprite):
                     surface, self.game.GREEN, (t, y, int(w * self.health//self.max_health), h))
             else:
                 explosion = Explosion(
-                    self.control, self.rect.centerx, self.rect.centery, 2)
+                    self.control, self.rect.centerx, self.rect.centery, 3)
                 self.game.explosions.add(explosion)
                 self.left_exhaust.kill()
                 self.right_exhaust.kill()
@@ -899,4 +954,3 @@ class ClientSpacecraft(pygame.sprite.Sprite):
         mask_surf = mask.to_surface()
         mask_surf.set_colorkey(self.game.BLACK)
         draw(self.game.clientScreen)
-

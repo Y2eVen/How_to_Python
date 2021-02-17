@@ -1,4 +1,3 @@
-import pygame
 import game
 
 gamez = game.Game()

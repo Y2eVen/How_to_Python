@@ -1,4 +1,5 @@
 import pygame
+from network import Network
 
 
 class Menu():
@@ -10,7 +11,7 @@ class Menu():
         self.run_display = True
         self.cursor_rect = pygame.Rect(
             0, 0, self.font_size + 5, self.font_size + 5)
-        self.offset = - self.font_size * 5
+        self.offset = - self.font_size * 4
 
     def draw_cursor(self):
         self.game.draw_text('>', self.font_size,
@@ -38,8 +39,8 @@ class MainMenu(Menu):
             self.game.check_events()
             self.check_input()
             self.game.canvaz.fill(self.game.BLACK)
-            self.game.draw_text(
-                'Game Ban May Bay 2 Nguoi', self.font_size, self.game.WIDTH // 2, self.game.HEIGHT // 2 - self.font_size)
+            self.game.draw_text('Game Ban May Bay 2 Nguoi', self.font_size,
+                                self.game.WIDTH // 2, self.game.HEIGHT // 2 - self.font_size)
             self.game.draw_text("Start Game", self.font_size,
                                 self.startx, self.starty)
             self.game.draw_text("Options", self.font_size,
@@ -105,8 +106,8 @@ class StartMenu(Menu):
             self.game.check_events()
             self.check_input()
             self.game.canvaz.fill((0, 0, 0))
-            self.game.draw_text(
-                'Game Mode', self.font_size, self.game.WIDTH / 2, self.game.HEIGHT / 2 - (self.font_size + 10))
+            self.game.draw_text('Game Mode', self.font_size, self.game.WIDTH /
+                                2, self.game.HEIGHT / 2 - (self.font_size + 10))
             self.game.draw_text("Tandem", self.font_size,
                                 self.tandemx, self.tandemy)
             self.game.draw_text("Local", self.font_size, self.lclx, self.lcly)
@@ -175,8 +176,8 @@ class OptionsMenu(Menu):
             self.game.check_events()
             self.check_input()
             self.game.canvaz.fill((0, 0, 0))
-            self.game.draw_text(
-                'Options', self.font_size, self.game.WIDTH / 2, self.game.HEIGHT / 2 - (self.font_size + 10))
+            self.game.draw_text('Options', self.font_size, self.game.WIDTH /
+                                2, self.game.HEIGHT / 2 - (self.font_size + 10))
             self.game.draw_text("Volume", self.font_size -
                                 10, self.volx, self.voly)
             self.game.draw_text("Controls", self.font_size -
@@ -213,10 +214,10 @@ class CreditsMenu(Menu):
                 self.game.menu = self.game.main_menu
                 self.run_display = False
             self.game.canvaz.fill(self.game.BLACK)
-            self.game.draw_text(
-                'Credits', self.font_size, self.game.WIDTH // 2, self.game.HEIGHT // 2 - self.font_size)
-            self.game.draw_text(
-                'Made by Lil Hoe & Ten Fingez', self.font_size - 10, self.game.WIDTH / 2, self.game.HEIGHT / 2 + self.font_size//2)
+            self.game.draw_text('Credits', self.font_size, self.game.WIDTH //
+                                2, self.game.HEIGHT // 2 - self.font_size)
+            self.game.draw_text('Made by Lil Hoe & Ten Fingez', self.font_size -
+                                10, self.game.WIDTH / 2, self.game.HEIGHT / 2 + self.font_size//2)
             self.blit_screen()
 
 
@@ -234,8 +235,8 @@ class PausedMenu(Menu):
         self.check_input()
         self.game.canvaz.fill((0, 0, 0))
 
-        self.game.draw_text(
-            'Paused', self.font_size, self.game.WIDTH / 2, self.game.HEIGHT / 2 - (self.font_size + 10))
+        self.game.draw_text('Paused', self.font_size, self.game.WIDTH /
+                            2, self.game.HEIGHT / 2 - (self.font_size + 10))
         self.game.draw_text("New Game", self.font_size -
                             10, self.newx, self.newy)
         self.game.draw_text("Main Menu", self.font_size -
@@ -281,8 +282,8 @@ class GameoverMenu(Menu):
             self.check_input()
             self.game.canvaz.fill((0, 0, 0))
 
-            self.game.draw_text(
-                'Game over', self.font_size, self.game.WIDTH / 2, self.game.HEIGHT / 2 - (self.font_size + 10))
+            self.game.draw_text('Game over', self.font_size, self.game.WIDTH /
+                                2, self.game.HEIGHT / 2 - (self.font_size + 10))
             self.game.draw_text("New Game", self.font_size -
                                 10, self.newx, self.newy)
             self.game.draw_text("Main Menu", self.font_size -
